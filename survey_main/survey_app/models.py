@@ -43,7 +43,6 @@ class Question(models.Model):
     """ Модель вопроса """
     survey = models.ForeignKey(Survey, verbose_name='Опрос', related_name='questions', on_delete=models.CASCADE)
     text = models.CharField(verbose_name='Текст вопроса', max_length=255)
-    # type = models.CharField(verbose_name='Тип вопроса', max_length=30)  # validators=[validateQuestionType]
     type = models.CharField(
         verbose_name='Тип вопроса',
         choices=(
@@ -71,13 +70,12 @@ class Answer(models.Model):
     user_id = models.CharField(max_length=64)
     survey = models.ForeignKey(Survey, related_name='survey', on_delete=models.CASCADE)
     question = models.ForeignKey(Question, related_name='question', on_delete=models.CASCADE)
-    # option = models.ForeignKey(Option, related_name='option', null=True, on_delete=models.CASCADE)
     answer_text = models.CharField(max_length=300, null=True)
 
     def __str__(self):
         return self.answer_text
 
+
 class AnonymousUser(models.Model):
     is_active = models.BooleanField(verbose_name='is_active', default=True)
     token = models.CharField(verbose_name='token', max_length=64)
-
