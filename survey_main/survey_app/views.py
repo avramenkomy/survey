@@ -9,6 +9,9 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateAP
 from datetime import datetime
 from django.db.models import Q
 from django.http import Http404
+from rest_framework.authtoken.models import Token
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate
 from .permissions import IsOwner, IsOwnerOrReadOnly, ReadOnly
 
 
@@ -40,6 +43,23 @@ def answer_validator(answer, type_answer):
     if type_answer == 'CHOICE' and len(answer_list) > 1:
         return False
     return True
+
+
+class LoginView(APIView):
+
+    @csrf_exempt
+    def get(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        if username is None or password is None:
+            return Response({"username or password was not entered"}, status=status.HTTP_400_BAD_REQUEST)
+        user = authenticate(username=username, password=password)
+        if not user:
+            return Response({"Invalid authenticated data: username or password"}, status=status.HTTP_400_BAD_REQUEST)
+        token, created = Token.objects.get_or_create(user=user)
+        if created:
+            return Response({"token": token.key}, status=status.HTTP_200_OK)
+        return Response({"Unexpected error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UserAllView(APIView):

@@ -4,6 +4,7 @@ from .views import *
 
 app_name = "survey_app"
 urlpatterns = [
+    path('login/', LoginView.as_view()),
     path('users/', UserAllView.as_view()),
 
     path('survey/', SurveyAllView.as_view()),  # get all survey
