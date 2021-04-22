@@ -13,7 +13,7 @@ def validateQuestionType(value):
         raise ValidationError('Invalid question type')
 
 
-OPTION_TYPES = ['CHOICE', 'MULTIPLE_CHOICE']
+OPTION_TYPES = ['CHOICE', 'MULTIPLY_CHOICE']
 
 
 # Create your models here.
@@ -52,6 +52,10 @@ class Question(models.Model):
         ),
         max_length=30
     )
+    variant_answer_1 = models.CharField(verbose_name='Вариант ответа 1', max_length=255, null=True, default=None)
+    variant_answer_2 = models.CharField(verbose_name='Вариант ответа 2', max_length=255, null=True, default=None)
+    variant_answer_3 = models.CharField(verbose_name='Вариант ответа 3', max_length=255, null=True, default=None)
+    variant_answer_4 = models.CharField(verbose_name='Вариант ответа 4', max_length=255, null=True, default=None)
 
     def __str__(self):
         return self.text
@@ -77,5 +81,6 @@ class Answer(models.Model):
 
 
 class AnonymousUser(models.Model):
+    """Модель для анонимного пользователя"""
     is_active = models.BooleanField(verbose_name='is_active', default=True)
     token = models.CharField(verbose_name='token', max_length=64)

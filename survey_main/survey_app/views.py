@@ -20,6 +20,28 @@ def is_owner(answer, user_id):
     return True
 
 
+def answer_validator(answer, type_answer):
+    import re
+    delimiter = '\.|,| |;|:|/|\|'
+    answer = answer.strip()
+    answer_list = re.split(delimiter, answer)
+    answer_variant = [1, 2, 3, 4]
+    while '' in answer_list:
+        answer_list.remove('')
+    if len(answer_list) == 0 or len(answer_list) > 4:
+        return False
+    for i in answer_list:
+        if i.isdigit() is False:
+            return False
+        if int(i) not in answer_variant:
+            return False
+    if type_answer == 'MULTIPLY_CHOICE' and len(answer_list) < 2:
+        return False
+    if type_answer == 'CHOICE' and len(answer_list) > 1:
+        return False
+    return True
+
+
 class UserAllView(APIView):
     serializer_class = UserSerializer
     permission_classes = (IsAdminUser,)
@@ -72,7 +94,7 @@ class QuestionView(ListAPIView):
 
 class QuestionCreateView(CreateAPIView):
     permission_classes = (IsAdminUser,)
-    serializer_class = QuestionSerializer
+    serializer_class = QuestionCreateSerializer
 
 
 class QuestionUpdateView(RetrieveUpdateAPIView):
@@ -125,6 +147,16 @@ class AnswerCreateView(APIView):
         user = request.user
         question = Question.objects.get(pk=pk)
 
+        if question.type == 'CHOICE' or question.type == 'MULTIPLY_CHOICE':
+            if answer_validator(request.data["answer_text"], question.type) is False:
+                return Response(
+                    {
+                        "Неверный формат ответа. Ответ должен быть числом или числами, соответствующим индексу "
+                        "варианта(1) или вариантов ответа в вопросе(1,2,3,4), разделенными запятой, точкой или пробелом"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         if user.is_authenticated:
             user_id = request.user.id
         else:
@@ -141,7 +173,6 @@ class AnswerCreateView(APIView):
                 {"Answer is already exists. Please entry update you answer with answer/update/{}".format(pk)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         data = {
             "user_id": user_id,
             "survey": question.survey.id,
@@ -157,7 +188,7 @@ class AnswerCreateView(APIView):
 
 
 class AnswerUpdateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
     serializer_class = AnswerUpdateSerializer
 
     def get(self, request, pk):
@@ -198,6 +229,7 @@ class AnswerUpdateView(APIView):
             # Проверяем владельца ответа и сохраняем новый ответ
             if is_owner(answer, token):
                 answer_text = request.data['answer_text']
+
                 answer.answer_text = answer_text
                 answer.save()
                 return Response(AnswerSerializer(answer).data, status=status.HTTP_200_OK)
@@ -216,7 +248,7 @@ class AnswerUpdate(APIView):
         else:
             user_id = request.headers["Cookie"].split('=')[1].split(';')[0]
 
-        answer = Answer.objects.filter(Q(question__id=pk) & Q(user_id=request.user.id)).first()
+        answer = Answer.objects.filter(Q(question__id=pk) & Q(user_id=user_id)).first()
         if answer is None:
             return Response({"Answer does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -232,6 +264,16 @@ class AnswerUpdate(APIView):
             user_id = request.headers["Cookie"].split('=')[1].split(';')[0]
 
         answer = Answer.objects.filter(Q(question__id=pk) & Q(user_id=user_id)).first()
+        question = Question.objects.get(id=pk)
+        if question.type == 'CHOICE' or question.type == 'MULTIPLY_CHOICE':
+            if answer_validator(request.data["answer_text"], question.type) is False:
+                return Response(
+                    {
+                        "Неверный формат ответа. Ответ должен быть числом или числами, соответствующим индексу "
+                        "варианта(1) или вариантов ответа в вопросе(1,2,3,4), разделенными запятой, точкой или пробелом"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         if answer is None:
             return Response({"Answer does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -248,18 +290,27 @@ class AnswerView(APIView):
     serializer_class = AnswerViewSerializer
 
     def get(self, request, pk):
-        qs = Answer.objects.all().filter(user_id=pk)  # .order_by('survey')
-        return Response(AnswerSerializer(qs, many=True).data, status=status.HTTP_200_OK)
+        qs = Answer.objects.all().filter(user_id=pk).order_by('survey')
+        if len(qs) == 0:
+            return Response(
+                {"This user has not yet answered the questions or does not exist"},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        return Response(AnswerViewSerializer(qs, many=True).data, status=status.HTTP_200_OK)
 
 
 class AnswerWithSurvey(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
 
     def get(self, request, pk_user, pk_survey):
         qs = Answer.objects.all().filter(user_id=pk_user).filter(survey=pk_survey)
-        print(qs.first().user_id)
-        if request.user.id == qs.first().user_id:
-            return Response(AnswerSerializer(qs, many=True).data, status=status.HTTP_200_OK)
+        if len(qs) == 0:
+            return Response(
+                {"This user id={} has not yet answered the questions or does not exist".format(pk_user)},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        if str(request.user.id) == qs.first().user_id or request.user.is_staff:
+            return Response(AnswerViewSerializer(qs, many=True).data, status=status.HTTP_200_OK)
         return Response({"Вы не можете просматривать этот список"}, status=status.HTTP_400_BAD_REQUEST)
 
 

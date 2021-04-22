@@ -19,10 +19,9 @@ urlpatterns = [
     path('question/delete/<int:pk>', QuestionDeleteView.as_view()),  # delete question
 
     path('answer/create/<int:pk>', AnswerCreateView.as_view()),  # create answer
-    path('answer/update/ans/<int:pk>', AnswerUpdateView.as_view()),  # update answer
-    path('answer/update/<int:pk>', AnswerUpdate.as_view()),
-    path('answer/<int:pk>', AnswerView.as_view()),
-    path('answer/<int:pk_user>/<int:pk_survey>', AnswerWithSurvey.as_view()),
-    path('answer/my_answer/', AnswerByUserView.as_view()),  # get answers for than user
+    path('answer/update/<int:pk>', AnswerUpdate.as_view()), # update answer on question with id=pk
+    path('answer/<int:pk>', AnswerView.as_view()), # get user answers with id=pk
+    path('answer/<int:pk_user>/<int:pk_survey>', AnswerWithSurvey.as_view()), # user's answers to the question
+    path('answer/my_answer/', AnswerByUserView.as_view()),  # get answers for owner
 
 ]

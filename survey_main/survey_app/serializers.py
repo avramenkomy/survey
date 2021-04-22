@@ -1,20 +1,20 @@
 from rest_framework import serializers
 from .models import Survey, Question, Answer, User, Option
-from rest_framework.serializers import ValidationError
 
 
-def validateQuestionType(value):
-    if not value in ['TEXT', 'CHOICE', 'MULTIPLY_CHOICE']:
-        raise ValidationError('Invalid question type')
-
-
-# Сериализатор вопроса
 class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = '__all__'
 
 
+class QuestionCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = '__all__'
+
+
+# сериализатор с двумя полями
 class QuestionOneFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
@@ -23,14 +23,13 @@ class QuestionOneFieldSerializer(serializers.ModelSerializer):
 
 # сериализатор для просмотра активных опросов с вопросами
 class SurveyActiveSerializer(serializers.ModelSerializer):
-    questions = QuestionOneFieldSerializer(many=True)
+    questions = QuestionSerializer(many=True)
 
     class Meta:
         model = Survey
         fields = '__all__'
 
 
-# сериализатор для просмотра опроса
 class SurveySerializer(serializers.ModelSerializer):
     class Meta:
         model = Survey
@@ -65,8 +64,6 @@ class AnswerCreateSerializer(serializers.ModelSerializer):
     question = serializers.HiddenField(default=QuestionSerializer())
     survey = serializers.HiddenField(default=SurveySerializer())
 
-    # user_id = serializers.ReadOnlyField(default=serializers.CurrentUserDefault())
-
     class Meta:
         model = Answer
         fields = '__all__'
@@ -83,7 +80,7 @@ class AnswerUpdateSerializer(serializers.ModelSerializer):
 
 
 class AnswerSerializer(serializers.ModelSerializer):
-    question = QuestionOneFieldSerializer()
+    question = QuestionSerializer()
     class Meta:
         model = Answer
         fields = '__all__'
