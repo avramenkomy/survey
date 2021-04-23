@@ -8,14 +8,6 @@ from django.contrib.auth.models import AnonymousUser
 User = get_user_model()
 
 
-def validateQuestionType(value):
-    if not value in ['TEXT', 'CHOICE', 'MULTIPLY_CHOICE']:
-        raise ValidationError('Invalid question type')
-
-
-OPTION_TYPES = ['CHOICE', 'MULTIPLY_CHOICE']
-
-
 # Create your models here.
 class Survey(models.Model):
     """ Модель опроса """
@@ -59,14 +51,6 @@ class Question(models.Model):
 
     def __str__(self):
         return self.text
-
-
-class Option(models.Model):
-    question = models.ForeignKey(Question, related_name='options', verbose_name='Вопрос', on_delete=models.CASCADE)
-    option_text = models.CharField(max_length=300)
-
-    def __str__(self):
-        return self.option_text
 
 
 class Answer(models.Model):

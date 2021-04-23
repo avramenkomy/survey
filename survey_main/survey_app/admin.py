@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Survey, Question, Answer, Option, AnonymousUser
+from .models import Survey, Question, Answer, AnonymousUser
 
 
 # Register your models here.
@@ -17,10 +17,6 @@ class QuestionAdmin(admin.ModelAdmin):
 class AnswerAdmin(admin.ModelAdmin):
     pass
 
-
-@admin.register(Option)
-class OptionAdmin(admin.ModelAdmin):
-    pass
 
 
 @admin.register(AnonymousUser)
